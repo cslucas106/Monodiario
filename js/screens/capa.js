@@ -1,6 +1,7 @@
 import * as api from '../api.js';
 import * as clock from '../clock.js';
 import { createBook, getTex, TEXNAMES, METAIS } from '../livro3d.js';
+import { CENARIOS } from '../cenarios.js';
 
 const T = window.THREE;
 const TEMPLATE = `
@@ -11,6 +12,7 @@ const TEMPLATE = `
 </div>
 <div id="ui">
   <div id="tabs"></div>
+  <div class="pane" data-k="ce"><div id="rce" class="r"></div></div>
   <div class="pane" data-k="m"><div id="rm" class="r"></div></div>
   <div class="pane" data-k="t"><div id="rt" class="r"></div></div>
   <div class="pane" data-k="c"><div id="rc" class="r"></div></div>
@@ -30,7 +32,8 @@ export async function mount(root, ctx) {
   root.innerHTML = TEMPLATE;
   const $ = (id) => root.querySelector('#' + id);
   const cover = await api.getCover();
-  const book = createBook($('stage'), { cfg: cover || {} });
+  let cenario = await api.getScenario();
+  const book = createBook($('stage'), { cfg: cover || {}, cenario });
   book.setDay(clock.today());
   const { cfg, build, paint, drawFoil } = book;
 
@@ -52,7 +55,7 @@ const NPOSL=[['topo','Topo'],['meio','Meio'],['baixo','Embaixo'],['se','Sup. esq
 const METAL=[['ouro','Ouro'],['prata','Prata'],['bronze','Bronze'],['cobre','Cobre']];
 const EMBL=[['nenhum','Liso'],['luas','Luas'],['arvore','Árvore'],['solua','Sol e lua'],['mandala','Mandala'],['flor','Flor-de-lis'],['bussola','Bússola'],['brasao','Brasão'],['coroa','Coroa'],['moldura','Moldura']];
 let tab='n';
-const TABS=[['n','Nome'],['m','Modelo'],['t','Textura'],['c','Cor'],['a','Acabamento'],['l','Metal'],['g','Páginas'],['e','Emblema']];
+const TABS=[['n','Nome'],['ce','Cenário'],['m','Modelo'],['t','Textura'],['c','Cor'],['a','Acabamento'],['l','Metal'],['g','Páginas'],['e','Emblema']];
 function cards(id,items,key,draw,round){ // cartões com miniatura (textura, metal)
   const root=$(id), sl=root.scrollLeft; root.innerHTML='';
   items.forEach(([v,l])=>{const b=document.createElement('button'), i=document.createElement('i'), t=document.createElement('span');
@@ -65,6 +68,10 @@ function ui(){
   TABS.forEach(([k,l])=>{const b=document.createElement('button'); b.className='tab'+(tab===k?' on':''); b.textContent=l; b.onclick=()=>{tab=k;ui();const on=tb.querySelector('.on'); if(on) tb.scrollLeft=(on.offsetLeft||0)-(tb.clientWidth-(on.offsetWidth||0))/2;}; tb.append(b);});
   tb.scrollLeft=tl;
   document.querySelectorAll('.pane').forEach(p=>p.classList.toggle('on',p.dataset.k===tab));
+  if(tab==='ce'){ const rce=$('rce'), sl=rce.scrollLeft; rce.innerHTML='';
+    CENARIOS.forEach(s=>{ const b=document.createElement('button'); b.className='c'+(s.id===cenario?' on':''); b.textContent=s.nome;
+      b.onclick=()=>{ cenario=s.id; book.setCenario(s.id); api.saveScenario(s.id); ui(); }; rce.append(b); });
+    rce.scrollLeft=sl; }
   if(tab==='m') chips('rm',MODELOS,'m');
   if(tab==='t'){ const cc=new T.Color(cfg.cor), base=(cc.r*.3+cc.g*.59+cc.b*.11)<.12?'#6b6b6b':cfg.cor;
     cards('rt',TEXNAMES,'t',(i,n)=>{const c=document.createElement('canvas'); c.width=c.height=56; const x=c.getContext('2d'); x.drawImage(getTex(n).image,0,0,128,128,0,0,56,56); x.globalCompositeOperation='multiply'; x.fillStyle=base; x.fillRect(0,0,56,56); i.append(c);}); }

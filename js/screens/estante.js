@@ -63,9 +63,9 @@ export async function mount(root) {
   if (window.THREE && !(await api.getCoverThumb())) { try { await gerarFoto(); } catch (e) { console.error(e); } }
   const lista = await api.listShelf();
   if (!window.THREE) return montarCSS(root, lista);
-  const { createShelf, CENARIOS } = await import('../estante3d.js');
-  root.innerHTML = '<header class="top"><div><h1>Estante</h1><small>Só a capa e o nome aparecem aqui</small></div></header><div class="estage"></div><div class="cenas"></div><div class="cta"></div>';
-  const stage = root.querySelector('.estage'), cenas = root.querySelector('.cenas'), cta = root.querySelector('.cta');
+  const { createShelf } = await import('../estante3d.js');
+  root.innerHTML = '<header class="top"><div><h1>Estante</h1><small>Só a capa e o nome aparecem aqui</small></div></header><div class="estage"></div><div class="cta"></div>';
+  const stage = root.querySelector('.estage'), cta = root.querySelector('.cta');
   const onPick = (b) => {
     cta.replaceChildren();
     if (!b) return;
@@ -79,14 +79,5 @@ export async function mount(root) {
   try { shelf = await createShelf(stage, { books: lista, scenario: await api.getScenario(), onPick }); } catch (e) {
     console.error(e); root.replaceChildren(); return montarCSS(root, lista);
   }
-  const atual = await api.getScenario();
-  CENARIOS.forEach((c) => {
-    const bt = h('button', { class: 'c' + (c.id === atual ? ' on' : '') }, c.nome);
-    bt.onclick = () => {
-      shelf.setScenario(c.id); api.saveScenario(c.id);
-      cenas.querySelectorAll('.c').forEach((x) => x.classList.toggle('on', x === bt));
-    };
-    cenas.append(bt);
-  });
   return () => shelf.destroy();
 }
