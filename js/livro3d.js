@@ -1,6 +1,6 @@
 // Livro 3D (Three.js r128, carregado por <script> em index.html).
 // createBook(stage, {cfg, onWant}) monta o livro dentro do elemento `stage` e devolve uma API.
-import { CENARIOS, montaCasa } from './cenarios.js';
+import { CENARIOS, montaCasa, MESA_Y } from './cenarios.js';
 const T = window.THREE;
 
 export const DEFAULT_COVER = {m:'trinco',cor:'#000000',e:'nenhum',t:'liso',metal:'prata',txt:'',np:'ie',pg:'#f6eedb',gl:0};
@@ -102,19 +102,20 @@ const flash=new T.PointLight(0xffc88a,0,3.5); flash.position.set(.8,0,.7); scene
 renderer.shadowMap.enabled=true; renderer.shadowMap.type=T.PCFSoftShadowMap;
 const luzBase={hemi:[hemi.color.getHex(),hemi.intensity], key:[key.color.getHex(),key.intensity], pos:key.position.clone()};
 let casa=null;
+const luzSombra=new T.DirectionalLight(0xffffff,0); luzSombra.position.set(.9,6,1.6); scene.add(luzSombra);
+luzSombra.shadow.mapSize.set(1024,1024); luzSombra.shadow.bias=-.0004; luzSombra.shadow.normalBias=.02;
+{ const c=luzSombra.shadow.camera; c.left=-3.5; c.right=3.5; c.top=3.5; c.bottom=-3.5; c.near=.5; c.far=20; c.updateProjectionMatrix(); }
 function setCenario(id){
   if(casa){ scene.remove(casa.group); casa.dispose(); casa=null; }
   hemi.color.set(luzBase.hemi[0]); hemi.intensity=luzBase.hemi[1]; key.color.set(luzBase.key[0]); key.intensity=luzBase.key[1];
-  key.position.copy(luzBase.pos); key.castShadow=false;
+  key.position.copy(luzBase.pos); luzSombra.castShadow=false;
+  shadow.position.y=-1.2;
   if(!id) return;
   casa=montaCasa(CENARIOS.find(c=>c.id===id)||CENARIOS[0], Math.min(8, renderer.capabilities.getMaxAnisotropy()));
-  scene.add(casa.group); const L=casa.luz;
+  scene.add(casa.group); const L=casa.luz; shadow.position.y=MESA_Y+.008; // a mancha de contato acompanha o chão
   if(L.hemi){ hemi.color.set(L.hemi[0]); hemi.intensity=L.hemi[1]; }
   if(L.key){ key.color.set(L.key[0]); key.intensity=L.key[1]; }
-  // sombra real: a luz vem de cima e da direita, então o livro projeta a sombra na mesa, à esquerda
-  key.position.set(3.2,4,3); key.castShadow=true; key.shadow.mapSize.set(1024,1024);
-  key.shadow.bias=-.0004; key.shadow.normalBias=.02;
-  const sc=key.shadow.camera; sc.left=-3.5; sc.right=3.5; sc.top=3.5; sc.bottom=-3.5; sc.near=.5; sc.far=20; sc.updateProjectionMatrix();
+  luzSombra.castShadow=true; // sombra real no chão, vinda de uma luz bem acima do livro
 }
 const marca=()=>rig.traverse(n=>{ if(n.isMesh) n.castShadow=true; });
 function fit(){

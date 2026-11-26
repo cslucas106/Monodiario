@@ -79,8 +79,8 @@ export function madeira(hex, vert) { // veios de madeira
 }
 
 
-// Cena da página inicial: parede ao fundo e mesa de madeira onde o livro apoia (a sombra do livro fica em y = -1.2).
-export const MESA_Y = -1.204;
+// Cena da página inicial: parede ao fundo e chão/mesa abaixo do livro.
+export const MESA_Y = -1.95; // altura do chão/mesa (o livro termina em -1.2; quanto menor, mais longe ele fica do chão)
 export function montaCasa(sc, aniso = 1) {
   const c = sc.casa || {}, g = new T.Group();
   let wall;
