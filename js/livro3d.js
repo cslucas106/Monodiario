@@ -102,7 +102,12 @@ const flash=new T.PointLight(0xffc88a,0,3.5); flash.position.set(.8,0,.7); scene
 const casa = opts.cenario ? montaCasa(CENARIOS.find(c=>c.id===opts.cenario)||CENARIOS[0], Math.min(8, renderer.capabilities.getMaxAnisotropy())) : null;
 if(casa){ scene.add(casa.group); const L=casa.luz;
   if(L.hemi){ hemi.color.set(L.hemi[0]); hemi.intensity=L.hemi[1]; }
-  if(L.key){ key.color.set(L.key[0]); key.intensity=L.key[1]; } }
+  if(L.key){ key.color.set(L.key[0]); key.intensity=L.key[1]; }
+  // sombra real: a luz vem de cima e da direita, então o livro projeta a sombra na mesa, à esquerda
+  renderer.shadowMap.enabled=true; renderer.shadowMap.type=T.PCFSoftShadowMap;
+  key.position.set(3.2,4,3); key.castShadow=true; key.shadow.mapSize.set(1024,1024);
+  key.shadow.bias=-.0004; key.shadow.normalBias=.02;
+  const sc=key.shadow.camera; sc.left=-3.5; sc.right=3.5; sc.top=3.5; sc.bottom=-3.5; sc.near=.5; sc.far=20; sc.updateProjectionMatrix(); }
 function fit(){
   const w=stage.clientWidth,h=stage.clientHeight; renderer.setSize(w,h,false);
   camera.aspect=w/h; camera.updateProjectionMatrix();
@@ -381,7 +386,7 @@ function loop(now){
   if(hook) hook.rotation.z=Math.min(1,q*4)*1.1;
   ext=1.3+.7*e; place();
   lockG.scale.setScalar(1+kick*.18); lockG.rotation.z=Math.sin(now/70)*kick*.06;
-  shadow.scale.set(1.9+e*1.9,1.4,1); shadow.material.opacity=.9-e*.2;
+  shadow.scale.set(1.9+e*1.9,1.4,1); shadow.material.opacity=(.9-e*.2)*(casa?.7:1);
   if(!drag){ off.x*=Math.exp(-dt*1.8); off.y+=vy*dt; vy*=Math.exp(-dt*2.2); }
   if(spinT<1){ const t1=Math.min(1,spinT+dt/2.2); off.y+=Math.PI*2*(ease(t1)-ease(spinT)); spinT=t1; }
   if(frase&&typing){
@@ -404,7 +409,7 @@ el.addEventListener('pointerup',()=>{if(moved<6){setOpen(!want);vy=0;} else if(p
 
 
 const ro = new ResizeObserver(() => fit()); ro.observe(stage);
-fit(); build(); drawPages(''); raf = requestAnimationFrame(loop);
+fit(); build(); if(casa) rig.traverse(n=>{ if(n.isMesh) n.castShadow=true; }); drawPages(''); raf = requestAnimationFrame(loop);
 
 return {
   cfg, build, paint, drawFoil,

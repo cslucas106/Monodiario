@@ -12,7 +12,7 @@ export const CENARIOS = [
     casa: { hemi: [0xffffff, 0.7], key: [0xfff4e0, 0.8] } },
   { id: 'noite', nome: 'Noite', fundo: '#0c1128', madeira: '#4a3426', rotulo: '#f1e7d6', tint: 0xd5dcff,
     hemi: [0x9fb0ff, 0x10142a, 0.5], dir: [0x8aa0ff, 0.45], lampada: [0xffb868, 2.4],
-    casa: { hemi: [0x9fb0ff, 0.7], key: [0x8aa0ff, 0.8], lamp: [0xffb868, 2.2, [2.4, 1.0, -1.2]] } },
+    casa: { sombra: 0.6, hemi: [0x9fb0ff, 0.7], key: [0x8aa0ff, 0.8], lamp: [0xffb868, 2.2, [2.4, 1.0, -1.2]] } },
 ];
 
 export function parede(id) { // textura que se repete na parede atrás da estante
@@ -69,12 +69,15 @@ export function montaCasa(sc, aniso = 1) {
   const c = sc.casa || {}, g = new T.Group();
   const tw = parede(sc.id); tw.encoding = T.sRGBEncoding; tw.repeat.set(10, 8); tw.anisotropy = aniso;
   const wall = new T.Mesh(new T.PlaneGeometry(40, 32), new T.MeshLambertMaterial({ map: tw }));
-  wall.position.set(0, MESA_Y + 16, -3.2); g.add(wall);
+  wall.position.set(0, MESA_Y + 16, -3.2); wall.receiveShadow = true; g.add(wall);
   const tm = madeira(sc.madeira, false); tm.encoding = T.sRGBEncoding;
   tm.wrapS = tm.wrapT = T.RepeatWrapping; tm.repeat.set(4, 6); tm.anisotropy = aniso;
   const mat = new T.MeshStandardMaterial({ map: tm, roughness: 0.62, envMapIntensity: 0.25, polygonOffset: true, polygonOffsetFactor: 1, polygonOffsetUnits: 1 });
   const mesa = new T.Mesh(new T.PlaneGeometry(40, 26), mat);
   mesa.rotation.x = -Math.PI / 2; mesa.position.set(0, MESA_Y, -3.2 + 13); g.add(mesa);
+  // camada que só mostra a sombra do livro (assim dá para controlar o quão escura ela fica, em qualquer cenário)
+  const sp = new T.Mesh(new T.PlaneGeometry(40, 26), new T.ShadowMaterial({ opacity: c.sombra || 0.5 }));
+  sp.rotation.x = -Math.PI / 2; sp.position.set(0, MESA_Y + 0.004, -3.2 + 13); sp.receiveShadow = true; g.add(sp);
   if (c.lamp) { const p = new T.PointLight(c.lamp[0], c.lamp[1], 11); p.position.set(...c.lamp[2]); g.add(p); }
   return {
     group: g, luz: c,
