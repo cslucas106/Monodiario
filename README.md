@@ -19,5 +19,7 @@ Plano completo em `plano.md`. Esta pasta é a Fase 1: tudo roda no navegador, co
 tela Hoje com carimbo e trava, Livro 3D com capa personalizável, **Folhear**, **Estante 3D** (3 cenários) e **Dump** mensal/anual em imagem 9:16.
 A página inicial agora mostra o livro sobre uma mesa de madeira, com o mesmo cenário escolhido na estante (`js/cenarios.js`).
 
+**Carimbo do mês** (`js/carimbo.js`): aparece no Folhear em meses já fechados com 5+ dias registrados (emoji + nome do sentimento, sem dias nem palavras). A regra dos 5 dias fica em `MIN_DIAS_CARIMBO` no `js/dump.js`.
+
 ## Ainda falta (ver `plano-part2.md`)
-Carimbo do dump no mês, livro aberto de outra pessoa, lombada com nome e ano, Fase 2 (Worker + D1).
+Livro aberto de outra pessoa, lombada com nome e ano, Fase 2 (Worker + D1).
