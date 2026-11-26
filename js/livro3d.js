@@ -326,7 +326,7 @@ function build(){
     L.add(cyl(.05,.03,goldMat,0,0,.05)); L.add(tor(.07,.01,strapMat,0,0,.045)); L.add(tor(.05,.008,goldMat,0,0,.066));
   } else {                     // executivo: cantoneiras de latão e fita marcadora
     corners(.005,1.495,1.045,.16,.035,.075,0);
-    const rm=new T.MeshStandardMaterial({color:0xa82f3c,roughness:.7}); fade.push(rm); strapB.add(box(.07,.7,.012,rm,1.05,-1.25,0));
+    const rm=new T.MeshStandardMaterial({color:0xa82f3c,roughness:.7}); fade.push(rm); const fita=box(.07,.7,.012,rm,1.05,-1.25,0); fita.userData.foraDaFoto=true; strapB.add(fita);
   }
   const WR={trinco:[.3,.2,.5],combinacao:[0,.3,.5],envolvente:[-.12,.09,1.5],antigo:[0,.2,.5],fivela:[0,.17,.5],ima:[0,.3,.5],elastico:[0,2.08,.09],cadeado:[0,.22,.5],chave:[0,.26,.5],giratorio:[0,.2,.4],ziper:[0,2.0,.1],cordao:[0,.03,.35]}[m];
   if(WR){ const [wy,wh,wd]=WR;
@@ -425,9 +425,11 @@ return {
   setOpen, isOpen: () => want, escrever, showText,
   // Foto do livro FECHADO e de frente, fundo transparente, recortada rente ao livro (para a estante).
   snapshot(w = 600, h = 800){
+    const escondidos = [];
     const pr = renderer.getPixelRatio(), sv = shadow.visible, fov0 = camera.fov;
     try {
       shadow.visible = false; if (casa) casa.group.visible = false;
+      rig.traverse((n) => { if (n.userData.foraDaFoto && n.visible) { n.visible = false; escondidos.push(n); } }); // fita que pende para fora do livro (Executivo): fica fora da foto, senão o recorte encolhe o livro
       renderer.setPixelRatio(1); renderer.setSize(w, h, false);
       camera.fov = 9; camera.aspect = w / h; camera.updateProjectionMatrix(); // lente longa: capa reta, sem as laterais
       pivot.rotation.y = 0; book.position.set(-.75, 0, 0); rig.rotation.set(0, 0, 0);
@@ -445,7 +447,7 @@ return {
       const o = document.createElement('canvas'); o.width = x1 - x0 + 1; o.height = y1 - y0 + 1;
       o.getContext('2d').drawImage(c, x0, y0, o.width, o.height, 0, 0, o.width, o.height);
       return o.toDataURL('image/webp', .9);
-    } finally { shadow.visible = sv; if (casa) casa.group.visible = true; camera.fov = fov0; camera.updateProjectionMatrix(); renderer.setPixelRatio(pr); fit(); }
+    } finally { escondidos.forEach((n) => { n.visible = true; }); shadow.visible = sv; if (casa) casa.group.visible = true; camera.fov = fov0; camera.updateProjectionMatrix(); renderer.setPixelRatio(pr); fit(); }
   },
   spin(){ vy = 0; spinT = 0; },
   setDay(iso){ const [y,m,d] = iso.split('-').map(Number); pageDate = new Date(y, m-1, d); drawPages(frase && !typing ? frase : ''); },
