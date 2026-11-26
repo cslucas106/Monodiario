@@ -16,5 +16,8 @@ Plano completo em `plano.md`. Esta pasta é a Fase 1: tudo roda no navegador, co
 
 ## O que já funciona
 `data/frases.json` (5 frases x 12 sentimentos), `clock.js`, `auth.js`, `api.js` (local), roteador por hash,
-tela Hoje com carimbo e trava, Livro 3D (`js/livro3d.js`) e Capa com salvamento automático.
-Folhear, Estante e Dump aparecem como "em breve".
+tela Hoje com carimbo e trava, Livro 3D com capa personalizável, **Folhear**, **Estante 3D** (3 cenários) e **Dump** mensal/anual em imagem 9:16.
+A página inicial agora mostra o livro sobre uma mesa de madeira, com o mesmo cenário escolhido na estante (`js/cenarios.js`).
+
+## Ainda falta (ver `plano-part2.md`)
+Carimbo do dump no mês, livro aberto de outra pessoa, lombada com nome e ano, Fase 2 (Worker + D1).

@@ -51,13 +51,13 @@ Checklist do `plano.md`, com o estado atual:
 - [x] Publicado no GitHub Pages
 
 Também falta:
-- [ ] **Página inicial com cenário**: trocar o "livro flutuando no nada" por uma cena (mesa de madeira, luz quente), usando o mesmo cenário escolhido na estante.
+- [x] **Página inicial com cenário**: trocar o "livro flutuando no nada" por uma cena (mesa de madeira, luz quente), usando o mesmo cenário escolhido na estante.
 - [ ] **Carimbo do dump no mês**: desenhar o carimbo (borda, inclinação, cor do sentimento) e mostrar nos meses com 5+ dias.
 - [ ] **Livro aberto de outra pessoa**: duas páginas, 6 meses em cada, com o carimbo nos meses que passaram da regra dos 5 dias.
 - [ ] Atualizar o `plano.md` (regra 8 e seção 3.2): quadrados viram carimbos.
 - [ ] **Lombada** com o nome (e depois o ano), para a estante.
-- [ ] Atualizar o `README.md` com o que já funciona.
-- [ ] Apagar o CSS que sobrou dos avisos antigos (`.hint`).
+- [x] Atualizar o `README.md` com o que já funciona.
+- [x] Apagar o CSS que sobrou dos avisos antigos (`.hint`).
 
 ---
 
