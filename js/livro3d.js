@@ -402,11 +402,12 @@ function loop(now){
   pagR.scale.z=pagL.scale.z=sE; pagR.position.z=-Do/2; pagL.position.z=-.025-Do/2;
   pivot.position.z=.135-.36*e; capaT.position.z=-.135-.09*e;      // aberto: as duas capas ficam na mesma altura
   lomb.scale.z=spineG.scale.z=(.32-.27*e)/.32; lomb.position.z=spineG.position.z=-.225*e;
+  flap.position.z=HZ-.09*e; wrapG.position.z=-.09*e;               // cinta e fechadura acompanham a capa de trás
   book.position.set(-.75*(1-e),Math.sin(now/1600)*.015,0);
   rig.rotation.y=.42*(1-e)+off.y; rig.rotation.x=.08*(1-e)-.8*e+off.x;
   const q=1-s; flap.rotation.y=ease(Math.max(0,(q-.2)/.8))*1.9;     // destrava o gancho e a cinta abre pela borda
   if(hook) hook.rotation.z=Math.min(1,q*4)*1.1;
-  ext=1.3+.7*e; place();
+  ext=1.3+.95*e; place();
   lockG.scale.setScalar(1+kick*.18); lockG.rotation.z=Math.sin(now/70)*kick*.06;
   shadow.scale.set(1.9+e*1.9,1.4,1); shadow.material.opacity=(.9-e*.2)*(casa?.7:1);
   if(!drag){ off.x*=Math.exp(-dt*1.8); off.y+=vy*dt; vy*=Math.exp(-dt*2.2); }
@@ -446,7 +447,7 @@ return {
       renderer.setPixelRatio(1); renderer.setSize(w, h, false);
       camera.fov = 9; camera.aspect = w / h; camera.updateProjectionMatrix(); // lente longa: capa reta, sem as laterais
       pivot.rotation.y = 0; pivot.position.z = .135; capaT.position.z = -.135; lomb.scale.z = spineG.scale.z = 1; lomb.position.z = spineG.position.z = 0;
-      pagR.scale.z = pagL.scale.z = 1; pagR.position.z = -.055; pagL.position.z = -.08; calhas.forEach((f) => f(0, 1)); ultE = -1; book.position.set(-.75, 0, 0); rig.rotation.set(0, 0, 0);
+      flap.position.z = HZ; wrapG.position.z = 0; pagR.scale.z = pagL.scale.z = 1; pagR.position.z = -.055; pagL.position.z = -.08; calhas.forEach((f) => f(0, 1)); ultE = -1; book.position.set(-.75, 0, 0); rig.rotation.set(0, 0, 0);
       flap.rotation.y = 0; if (hook) hook.rotation.z = 0;
       ext = 1.3; place();
       renderer.render(scene, camera);
