@@ -98,16 +98,25 @@ const hemi=new T.HemisphereLight(0xfff0d8,0x2a1c10,.85); scene.add(hemi);
 const key=new T.DirectionalLight(0xffe2b8,1.15); key.position.set(2.5,3.5,4); scene.add(key);
 const fill=new T.DirectionalLight(0xa8b8ff,.25); fill.position.set(-3,1,2); scene.add(fill);
 const flash=new T.PointLight(0xffc88a,0,3.5); flash.position.set(.8,0,.7); scene.add(flash);
-// Cenário da casa (só na página inicial): parede + mesa atrás do livro, com a luz do cenário.
-const casa = opts.cenario ? montaCasa(CENARIOS.find(c=>c.id===opts.cenario)||CENARIOS[0], Math.min(8, renderer.capabilities.getMaxAnisotropy())) : null;
-if(casa){ scene.add(casa.group); const L=casa.luz;
+// Cenário da casa (página inicial e aba Cenário da capa): parede + mesa atrás do livro, com a luz do cenário.
+renderer.shadowMap.enabled=true; renderer.shadowMap.type=T.PCFSoftShadowMap;
+const luzBase={hemi:[hemi.color.getHex(),hemi.intensity], key:[key.color.getHex(),key.intensity], pos:key.position.clone()};
+let casa=null;
+function setCenario(id){
+  if(casa){ scene.remove(casa.group); casa.dispose(); casa=null; }
+  hemi.color.set(luzBase.hemi[0]); hemi.intensity=luzBase.hemi[1]; key.color.set(luzBase.key[0]); key.intensity=luzBase.key[1];
+  key.position.copy(luzBase.pos); key.castShadow=false;
+  if(!id) return;
+  casa=montaCasa(CENARIOS.find(c=>c.id===id)||CENARIOS[0], Math.min(8, renderer.capabilities.getMaxAnisotropy()));
+  scene.add(casa.group); const L=casa.luz;
   if(L.hemi){ hemi.color.set(L.hemi[0]); hemi.intensity=L.hemi[1]; }
   if(L.key){ key.color.set(L.key[0]); key.intensity=L.key[1]; }
   // sombra real: a luz vem de cima e da direita, então o livro projeta a sombra na mesa, à esquerda
-  renderer.shadowMap.enabled=true; renderer.shadowMap.type=T.PCFSoftShadowMap;
   key.position.set(3.2,4,3); key.castShadow=true; key.shadow.mapSize.set(1024,1024);
   key.shadow.bias=-.0004; key.shadow.normalBias=.02;
-  const sc=key.shadow.camera; sc.left=-3.5; sc.right=3.5; sc.top=3.5; sc.bottom=-3.5; sc.near=.5; sc.far=20; sc.updateProjectionMatrix(); }
+  const sc=key.shadow.camera; sc.left=-3.5; sc.right=3.5; sc.top=3.5; sc.bottom=-3.5; sc.near=.5; sc.far=20; sc.updateProjectionMatrix();
+}
+const marca=()=>rig.traverse(n=>{ if(n.isMesh) n.castShadow=true; });
 function fit(){
   const w=stage.clientWidth,h=stage.clientHeight; renderer.setSize(w,h,false);
   camera.aspect=w/h; camera.updateProjectionMatrix();
@@ -409,10 +418,10 @@ el.addEventListener('pointerup',()=>{if(moved<6){setOpen(!want);vy=0;} else if(p
 
 
 const ro = new ResizeObserver(() => fit()); ro.observe(stage);
-fit(); build(); if(casa) rig.traverse(n=>{ if(n.isMesh) n.castShadow=true; }); drawPages(''); raf = requestAnimationFrame(loop);
+fit(); build(); marca(); setCenario(opts.cenario); drawPages(''); raf = requestAnimationFrame(loop);
 
 return {
-  cfg, build, paint, drawFoil,
+  cfg, build: () => { build(); marca(); }, paint, drawFoil, setCenario,
   setOpen, isOpen: () => want, escrever, showText,
   // Foto do livro FECHADO e de frente, fundo transparente, recortada rente ao livro (para a estante).
   snapshot(w = 600, h = 800){
