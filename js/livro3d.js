@@ -157,10 +157,12 @@ function plate(w,h,d,r,m,x,y,z){const g=new T.ExtrudeGeometry(rr(w,h,r),{depth:d
 const rig=new T.Group(); scene.add(rig); const book=new T.Group(); rig.add(book);
 const box=(w,h,d,m,x,y,z)=>{const o=new T.Mesh(new T.BoxGeometry(w,h,d),m);o.position.set(x,y,z);return o;};
 book.add(plate(1.5,2.1,.05,.06,coverMat,.75,0,-.135));
-// folhas em duas metades iguais; a face de leitura afunda perto da lombada (calha), como num livro de verdade
-function folhas(d,mats,x,y,z,zFace,dir){ const g=new T.BoxGeometry(1.44,2.04,d,16,1,1), p=g.attributes.position;
-  for(let i=0;i<p.count;i++) if(Math.abs(p.getZ(i)-zFace)<1e-4){ const n=(p.getX(i)+.72)/1.44; p.setZ(i,zFace+dir*.045*(1-n)*(1-n)); }
-  p.needsUpdate=true; g.computeVertexNormals(); const o=new T.Mesh(g,mats); o.position.set(x,y,z); return o; }
+// folhas em duas metades iguais; ao abrir, a face de leitura afunda perto da lombada (calha). Fechado, fica reto
+const calhas=[]; let ultE=-1;
+function folhas(d,mats,x,y,z,zFace,dir){ const g=new T.BoxGeometry(1.44,2.04,d,16,1,1), p=g.attributes.position, idx=[];
+  for(let i=0;i<p.count;i++) if(Math.abs(p.getZ(i)-zFace)<1e-4) idx.push([i,(p.getX(i)+.72)/1.44]);
+  calhas.push(e=>{ idx.forEach(([i,n])=>p.setZ(i,zFace+dir*.085*e*(1-n)*(1-n))); p.needsUpdate=true; g.computeVertexNormals(); });
+  const o=new T.Mesh(g,mats); o.position.set(x,y,z); return o; }
 book.add(folhas(.11,[edgeV,paperDk,edgeH,edgeH,pageR,paper],.77,0,-.055,.055,-1));  // folhas (página direita)
 const lomb=box(.07,2.1,.32,coverMat,-.02,0,0); book.add(lomb);                      // lombada
 
@@ -394,9 +396,10 @@ function loop(now){
   kick=Math.max(0,kick-dt*1.2);
   const e=ease(openT), s=ease(strapT);
   pivot.rotation.y=-e*Math.PI*.985;
+  if(e!==ultE){ ultE=e; calhas.forEach(f=>f(e)); }
   pivot.position.z=.135-.27*e; lomb.scale.z=spineG.scale.z=(.32-.27*e)/.32; lomb.position.z=spineG.position.z=-.135*e;   // aberto: as duas metades ficam na mesma altura
   book.position.set(-.75*(1-e),Math.sin(now/1600)*.015,0);
-  rig.rotation.y=.42*(1-e)+off.y; rig.rotation.x=.08*(1-e)+off.x;
+  rig.rotation.y=.42*(1-e)+off.y; rig.rotation.x=.08*(1-e)-.6*e+off.x;
   const q=1-s; flap.rotation.y=ease(Math.max(0,(q-.2)/.8))*1.9;     // destrava o gancho e a cinta abre pela borda
   if(hook) hook.rotation.z=Math.min(1,q*4)*1.1;
   ext=1.3+.7*e; place();
@@ -438,7 +441,7 @@ return {
       rig.traverse((n) => { if (n.userData.foraDaFoto && n.visible) { n.visible = false; escondidos.push(n); } }); // fita que pende para fora do livro (Executivo): fica fora da foto, senão o recorte encolhe o livro
       renderer.setPixelRatio(1); renderer.setSize(w, h, false);
       camera.fov = 9; camera.aspect = w / h; camera.updateProjectionMatrix(); // lente longa: capa reta, sem as laterais
-      pivot.rotation.y = 0; pivot.position.z = .135; lomb.scale.z = spineG.scale.z = 1; lomb.position.z = spineG.position.z = 0; book.position.set(-.75, 0, 0); rig.rotation.set(0, 0, 0);
+      pivot.rotation.y = 0; pivot.position.z = .135; lomb.scale.z = spineG.scale.z = 1; lomb.position.z = spineG.position.z = 0; calhas.forEach((f) => f(0)); ultE = -1; book.position.set(-.75, 0, 0); rig.rotation.set(0, 0, 0);
       flap.rotation.y = 0; if (hook) hook.rotation.z = 0;
       ext = 1.3; place();
       renderer.render(scene, camera);
