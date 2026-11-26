@@ -11,11 +11,12 @@ export function dadosCarimbo(entradas, cat, mes, hoje) {
   return { mes, emoji: v.emoji, nome: v.nome, cor: v.cor };
 }
 
-export function criaCarimbo(d) {
+// opcoes.mini: versão pequena, para as casinhas do livro aberto de outra pessoa.
+export function criaCarimbo(d, opcoes = {}) {
   const m = Number(d.mes.slice(5, 7));
   const grau = ((m * 37) % 9) - 4; // inclinação leve, diferente em cada mês (-4 a +4 graus)
   const e = document.createElement('div');
-  e.className = 'stamp';
+  e.className = 'stamp' + (opcoes.mini ? ' mini' : '');
   e.style.setProperty('--cor', d.cor);
   e.style.setProperty('--grau', grau + 'deg');
   e.setAttribute('role', 'img');

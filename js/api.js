@@ -3,6 +3,7 @@
 // Nenhuma tela chama localStorage, fetch ou window.Telegram direto: tudo passa por aqui.
 import { today, addDays } from './clock.js';
 import { getUser } from './auth.js';
+import { dadosCarimbo } from './carimbo.js';
 
 const key = (k) => `monodiario:v1:${getUser().id}:${k}`;
 const read = (k, def) => { try { const v = localStorage.getItem(key(k)); return v ? JSON.parse(v) : def; } catch { return def; } };
@@ -76,9 +77,51 @@ const PERFIS_FALSOS = [
   { id: 'f7', nome: 'Gabi',  cover: { cor: '#d9a441', t: 'camurca',  metal: 'prata' , e: 'solua',   txt: 'Gabi',            np: 'id', pg: '#dbe7f5' } },
 ];
 
+const SEM_ACESSO = new Set(['f6']); // perfil falso que ainda não liberou o livro (testa o "pedir para ver")
+
 export async function listShelf(groupId) { // groupId ainda não é usado na Fase 1
   const meu = { id: getUser().id, nome: getUser().nome, voce: true, thumb: read('coverThumb2', null), cover: { ...CAPA_PADRAO, ...(read('cover', null) || {}) } };
-  return [meu, ...PERFIS_FALSOS.map((p) => ({ ...p, cover: { ...CAPA_PADRAO, ...p.cover } }))];
+  return [meu, ...PERFIS_FALSOS.map((p) => ({ ...p, liberado: !SEM_ACESSO.has(p.id), cover: { ...CAPA_PADRAO, ...p.cover } }))];
 }
 
 // Ainda por fazer: getDump(tipo, periodo) no api (hoje o cálculo roda direto nas telas) e shareDump(groupId, mes)
+
+// Livro aberto de outra pessoa. Devolve SÓ os 12 carimbos do ano (ou null no mês sem carimbo):
+// nunca dias nem palavras. Na Fase 2 isto vira fetch() e o Worker faz a mesma conta a partir de `summaries`.
+// Nesta fase os registros dos perfis falsos são inventados aqui dentro e não saem desta função.
+const sorteador = (txt) => { // número aleatório que sempre dá o mesmo resultado para o mesmo texto
+  let a = 0; for (const c of txt) a = (Math.imul(a, 31) + c.charCodeAt(0)) >>> 0;
+  return () => { a = (a + 0x6D2B79F5) >>> 0; let t = a; t = Math.imul(t ^ (t >>> 15), t | 1); t ^= t + Math.imul(t ^ (t >>> 7), t | 61); return ((t ^ (t >>> 14)) >>> 0) / 4294967296; };
+};
+const p2 = (n) => String(n).padStart(2, '0');
+
+function registrosFalsos(id, ano, hoje, cat) {
+  const rnd = sorteador(id + ano);
+  const ids = cat.categorias.map((c) => c.id);
+  const lista = [];
+  for (let m = 1; m <= 12; m++) {
+    const mes = `${ano}-${p2(m)}`;
+    if (mes > hoje.slice(0, 7)) break;
+    const ultimo = mes === hoje.slice(0, 7) ? Number(hoje.slice(8, 10)) : new Date(ano, m, 0).getDate();
+    const alvo = rnd() < 0.2 ? Math.floor(rnd() * 5) : 8 + Math.floor(rnd() * 20); // alguns meses ficam com menos de 5 dias
+    const favorito = ids[Math.floor(rnd() * ids.length)], segundo = ids[Math.floor(rnd() * ids.length)];
+    for (let d = 1; d <= Math.min(ultimo, alvo); d++) {
+      const r = rnd();
+      lista.push({ data: `${mes}-${p2(d)}`, categoria: r < 0.6 ? favorito : r < 0.8 ? segundo : ids[Math.floor(rnd() * ids.length)] });
+    }
+  }
+  return lista;
+}
+
+export async function getFriendBook(id, ano) {
+  const p = PERFIS_FALSOS.find((x) => x.id === id);
+  if (!p) throw erro('notfound', 'Livro não encontrado.');
+  if (SEM_ACESSO.has(id)) throw erro('denied', 'Sem permissão para ver este livro.');
+  const cat = await getCatalog(), hoje = today();
+  const todas = registrosFalsos(id, ano, hoje, cat);
+  const meses = Array.from({ length: 12 }, (_, i) => {
+    const mes = `${ano}-${p2(i + 1)}`;
+    return dadosCarimbo(todas.filter((e) => e.data.startsWith(mes)), cat, mes, hoje);
+  });
+  return { id, nome: p.nome, ano, meses };
+}
