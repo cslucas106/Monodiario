@@ -1,5 +1,6 @@
 // Livro 3D (Three.js r128, carregado por <script> em index.html).
 // createBook(stage, {cfg, onWant}) monta o livro dentro do elemento `stage` e devolve uma API.
+import { CENARIOS, montaCasa } from './cenarios.js';
 const T = window.THREE;
 
 export const DEFAULT_COVER = {m:'trinco',cor:'#000000',e:'nenhum',t:'liso',metal:'prata',txt:'',np:'ie',pg:'#f6eedb',gl:0};
@@ -93,10 +94,15 @@ const renderer=new T.WebGLRenderer({antialias:true,alpha:true});
 renderer.setPixelRatio(Math.min(devicePixelRatio,2)); renderer.outputEncoding=T.sRGBEncoding;
 stage.prepend(renderer.domElement);
 const scene=new T.Scene(), camera=new T.PerspectiveCamera(32,1,.1,50);
-scene.add(new T.HemisphereLight(0xfff0d8,0x2a1c10,.85));
+const hemi=new T.HemisphereLight(0xfff0d8,0x2a1c10,.85); scene.add(hemi);
 const key=new T.DirectionalLight(0xffe2b8,1.15); key.position.set(2.5,3.5,4); scene.add(key);
 const fill=new T.DirectionalLight(0xa8b8ff,.25); fill.position.set(-3,1,2); scene.add(fill);
 const flash=new T.PointLight(0xffc88a,0,3.5); flash.position.set(.8,0,.7); scene.add(flash);
+// Cenário da casa (só na página inicial): parede + mesa atrás do livro, com a luz do cenário.
+const casa = opts.cenario ? montaCasa(CENARIOS.find(c=>c.id===opts.cenario)||CENARIOS[0], Math.min(8, renderer.capabilities.getMaxAnisotropy())) : null;
+if(casa){ scene.add(casa.group); const L=casa.luz;
+  if(L.hemi){ hemi.color.set(L.hemi[0]); hemi.intensity=L.hemi[1]; }
+  if(L.key){ key.color.set(L.key[0]); key.intensity=L.key[1]; } }
 function fit(){
   const w=stage.clientWidth,h=stage.clientHeight; renderer.setSize(w,h,false);
   camera.aspect=w/h; camera.updateProjectionMatrix();
@@ -407,7 +413,7 @@ return {
   snapshot(w = 600, h = 800){
     const pr = renderer.getPixelRatio(), sv = shadow.visible, fov0 = camera.fov;
     try {
-      shadow.visible = false;
+      shadow.visible = false; if (casa) casa.group.visible = false;
       renderer.setPixelRatio(1); renderer.setSize(w, h, false);
       camera.fov = 9; camera.aspect = w / h; camera.updateProjectionMatrix(); // lente longa: capa reta, sem as laterais
       pivot.rotation.y = 0; book.position.set(-.75, 0, 0); rig.rotation.set(0, 0, 0);
@@ -425,10 +431,10 @@ return {
       const o = document.createElement('canvas'); o.width = x1 - x0 + 1; o.height = y1 - y0 + 1;
       o.getContext('2d').drawImage(c, x0, y0, o.width, o.height, 0, 0, o.width, o.height);
       return o.toDataURL('image/webp', .9);
-    } finally { shadow.visible = sv; camera.fov = fov0; camera.updateProjectionMatrix(); renderer.setPixelRatio(pr); fit(); }
+    } finally { shadow.visible = sv; if (casa) casa.group.visible = true; camera.fov = fov0; camera.updateProjectionMatrix(); renderer.setPixelRatio(pr); fit(); }
   },
   spin(){ vy = 0; spinT = 0; },
   setDay(iso){ const [y,m,d] = iso.split('-').map(Number); pageDate = new Date(y, m-1, d); drawPages(frase && !typing ? frase : ''); },
-  destroy(){ alive = false; cancelAnimationFrame(raf); ro.disconnect(); renderer.dispose(); try { renderer.forceContextLoss(); } catch (e) {} el.remove(); },
+  destroy(){ alive = false; if (casa) casa.dispose(); cancelAnimationFrame(raf); ro.disconnect(); renderer.dispose(); try { renderer.forceContextLoss(); } catch (e) {} el.remove(); },
 };
 }

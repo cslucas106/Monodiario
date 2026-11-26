@@ -1,5 +1,7 @@
 // Estante 3D (Three.js r128): livros em pé, de frente, como numa biblioteca.
 // Cada cenário ("casa") muda parede, madeira e luz. Só usa a foto da capa e o nome (nunca o conteúdo do diário).
+import { CENARIOS, parede, madeira } from './cenarios.js';
+export { CENARIOS };
 const T = window.THREE;
 
 const POR_FILA = 3, ALT = 1.25, PASSO = 1.78, LARG = 3.6, TAB = 0.14, PROF = 0.7, CEL = 1.12;
@@ -10,42 +12,6 @@ const METAIS = {
   bronze: ['#e0b080', '#9c6a38', '#d6a572'], cobre: ['#f0a47e', '#b4562f', '#e8946c'],
 };
 const EMBLEMA = { luas: '☾', arvore: '❦', solua: '☼', mandala: '❂', flor: '⚜', bussola: '✥', brasao: '❖', coroa: '♛' };
-
-// Para criar outro cenário, basta copiar um bloco abaixo (e, se quiser, um desenho novo de parede em parede()).
-export const CENARIOS = [
-  { id: 'classico', nome: 'Biblioteca', fundo: '#1c120b', madeira: '#5a3a22', rotulo: '#f1e7d6', tint: 0xffffff,
-    hemi: [0xffe9c8, 0x2a1a0e, 0.55], dir: [0xffd9a0, 1.0], lampada: null },
-  { id: 'sala', nome: 'Sala clara', fundo: '#e9dcc6', madeira: '#b08457', rotulo: '#3a2a1a', tint: 0xffffff,
-    hemi: [0xffffff, 0xd8c8b0, 0.62], dir: [0xfff4e0, 0.6], lampada: null },
-  { id: 'noite', nome: 'Noite', fundo: '#0c1128', madeira: '#4a3426', rotulo: '#f1e7d6', tint: 0xd5dcff,
-    hemi: [0x9fb0ff, 0x10142a, 0.5], dir: [0x8aa0ff, 0.45], lampada: [0xffb868, 2.4] },
-];
-
-function parede(id) { // textura que se repete na parede atrás da estante
-  const S = 256, cv = document.createElement('canvas'); cv.width = cv.height = S;
-  const x = cv.getContext('2d');
-  if (id === 'sala') {
-    x.fillStyle = '#efe4d0'; x.fillRect(0, 0, S, S);
-    x.fillStyle = 'rgba(190,160,120,.18)';
-    for (let i = 0; i < S; i += 32) x.fillRect(i, 0, 14, S);
-  } else if (id === 'noite') {
-    const g = x.createLinearGradient(0, 0, 0, S); g.addColorStop(0, '#0e1530'); g.addColorStop(1, '#1b2552');
-    x.fillStyle = g; x.fillRect(0, 0, S, S);
-    for (let i = 0; i < 26; i++) {
-      x.fillStyle = `rgba(255,248,220,${0.25 + Math.random() * 0.6})`;
-      x.beginPath(); x.arc(Math.random() * S, Math.random() * S, Math.random() * 1.3 + 0.4, 0, 6.3); x.fill();
-    }
-  } else {
-    x.fillStyle = '#2b1a0f'; x.fillRect(0, 0, S, S);
-    for (let i = 0; i < 90; i++) {
-      x.fillStyle = Math.random() < 0.5 ? 'rgba(0,0,0,.22)' : 'rgba(255,200,140,.06)';
-      x.fillRect(Math.random() * S, 0, Math.random() * 2 + 0.5, S);
-    }
-    x.fillStyle = 'rgba(0,0,0,.45)';
-    for (let i = 0; i < S; i += 64) x.fillRect(i, 0, 2, S);
-  }
-  const t = new T.CanvasTexture(cv); t.wrapS = t.wrapT = T.MirroredRepeatWrapping; return t;
-}
 
 function rotulo(txt, cor) { // nome do dono, escrito na frente da prateleira
   const cv = document.createElement('canvas'); cv.width = 512; cv.height = 80;
@@ -88,26 +54,6 @@ function capaCanvas(c = {}, nome = '') { // desenho de reserva, para quem ainda 
     }
   }
   return cv;
-}
-
-function madeira(hex, vert) { // veios de madeira
-  const W = 512, H = 128, cv = document.createElement('canvas'); cv.width = W; cv.height = H;
-  const x = cv.getContext('2d');
-  x.fillStyle = hex; x.fillRect(0, 0, W, H);
-  for (let i = 0; i < 70; i++) {
-    const a = Math.random() * 0.16;
-    x.fillStyle = Math.random() < 0.5 ? `rgba(0,0,0,${a})` : `rgba(255,235,200,${a * 0.7})`;
-    x.fillRect(0, Math.random() * H, W, Math.random() * 2.2 + 0.4);
-  }
-  x.strokeStyle = 'rgba(0,0,0,.10)'; x.lineWidth = 1;
-  for (let i = 0; i < 10; i++) {
-    const y0 = Math.random() * H; x.beginPath(); x.moveTo(0, y0);
-    for (let u = 0; u <= W; u += 32) x.lineTo(u, y0 + Math.sin(u / 60 + i) * 2.5);
-    x.stroke();
-  }
-  const t = new T.CanvasTexture(cv);
-  if (vert) { t.center.set(0.5, 0.5); t.rotation = Math.PI / 2; }
-  return t;
 }
 
 function paginas(cor, tipo) { // borda do livro: folhas no meio e as capas nas pontas
