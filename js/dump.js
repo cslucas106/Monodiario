@@ -2,6 +2,7 @@
 // Regra do mês: se o 1º lugar tem mais de MARGEM dias de vantagem sobre os demais, ele vence.
 // Se há empate ou diferença de até MARGEM dia(s), o mês é lido pela soma (média das valências ponderada pelos dias).
 export const MARGEM = 1;
+export const MIN_DIAS_CARIMBO = 5; // o mês só ganha carimbo com pelo menos 5 dias registrados
 export const MESES = ['janeiro', 'fevereiro', 'março', 'abril', 'maio', 'junho', 'julho', 'agosto', 'setembro', 'outubro', 'novembro', 'dezembro'];
 export const AGRIDOCE = { id: 'agridoce', nome: 'Agridoce', emoji: '🌗', cor: '#9a8fb0', valencia: 0 }; // resultado composto, não é um dos 12
 
