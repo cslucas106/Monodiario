@@ -53,7 +53,7 @@ Checklist do `plano.md`, com o estado atual:
 Também falta:
 - [x] **Página inicial com cenário**: trocar o "livro flutuando no nada" por uma cena (mesa de madeira, luz quente), usando o mesmo cenário escolhido na estante.
 - [x] **Carimbo do dump no mês**: feito no Folhear (`js/carimbo.js`), só em meses fechados com 5+ dias. Falta reaproveitar no livro aberto de outra pessoa.
-- [ ] **Livro aberto de outra pessoa**: duas páginas, 6 meses em cada, com o carimbo nos meses que passaram da regra dos 5 dias.
+- [x] **Livro aberto de outra pessoa**: feito (`js/screens/amigo.js`), duas páginas com 6 meses cada e o carimbo nos meses fechados com 5+ dias. Ainda sem o fluxo real de "pedir para ver" e aprovar (Fase 4).
 - [ ] Atualizar o `plano.md` (regra 8 e seção 3.2): quadrados viram carimbos.
 - [ ] **Lombada** com o nome (e depois o ano), para a estante.
 - [x] Atualizar o `README.md` com o que já funciona.

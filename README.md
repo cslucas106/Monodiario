@@ -21,5 +21,7 @@ A página inicial agora mostra o livro sobre uma mesa de madeira, com o mesmo ce
 
 **Carimbo do mês** (`js/carimbo.js`): aparece no Folhear em meses já fechados com 5+ dias registrados (emoji + nome do sentimento, sem dias nem palavras). A regra dos 5 dias fica em `MIN_DIAS_CARIMBO` no `js/dump.js`.
 
+**Livro aberto de outra pessoa** (`js/screens/amigo.js`, rota `#/amigo/ID`): duas páginas (jan-jun e jul-dez) só com os carimbos. Na estante, tocar num livro de teste mostra o botão "Abrir o livro de ..." (Fábio não liberou, para testar o "pedir para ver"). `api.getFriendBook` devolve só os 12 carimbos, nunca dias nem palavras.
+
 ## Ainda falta (ver `plano-part2.md`)
-Livro aberto de outra pessoa, lombada com nome e ano, Fase 2 (Worker + D1).
+Lombada com nome e ano, Fase 2 (Worker + D1).
