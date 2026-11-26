@@ -73,6 +73,10 @@ export async function mount(root) {
       const bt = h('button', { class: 'c go' }, 'Editar minha capa');
       bt.onclick = () => { location.hash = '#/capa'; };
       cta.append(bt);
+    } else if (b.liberado) {
+      const bt = h('button', { class: 'c go' }, `Abrir o livro de ${b.nome}`);
+      bt.onclick = () => { location.hash = `#/amigo/${encodeURIComponent(b.id)}`; };
+      cta.append(bt);
     } else cta.append(h('span', {}, `${b.nome} · pedir para ver: em breve`));
   };
   let shelf;
