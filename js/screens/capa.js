@@ -22,6 +22,9 @@ const TEMPLATE = `
   <div class="pane" data-k="e"><div id="re" class="r"></div></div>
   <div class="pane" data-k="n"><div class="r" id="rtx"><input id="tx" maxlength="24" placeholder="Seu nome ou título (opcional)"></div><div id="rp" class="r"></div></div>
 </div>
+<div id="cf"><div class="sheet"><b>Sair sem salvar?</b><small>As mudanças na capa serão descartadas.</small>
+  <div class="r"><button class="c" id="cfs">Descartar</button><button class="c go" id="cfn">Continuar editando</button></div>
+</div></div>
 <div id="wh"><div class="sheet"><b>Escolha a cor</b>
   <canvas id="wc" width="220" height="220"></canvas>
   <div class="r"><small>Claridade</small><input type="range" id="wv" min="0" max="100" value="60"></div>
@@ -37,16 +40,16 @@ export async function mount(root, ctx) {
   book.setDay(clock.today());
   const { cfg, build, paint, drawFoil } = book;
 
-  // salva a capa sozinho (com um pequeno atraso para não gravar a cada toque na roda de cores)
-  let st = 0;
-  const flush = () => { clearTimeout(st); st = 0; api.saveCover({ ...cfg }); };
-  const save = () => { clearTimeout(st); st = setTimeout(flush, 250); };
+  // As mudanças ficam só na tela até tocar em Salvar. Voltar descarta (e pergunta antes, se houver algo alterado).
+  const estado = () => JSON.stringify(cfg) + '|' + cenario;
+  let salvo = estado(), salvou = false;
+  const mudou = () => estado() !== salvo;
 
 function chips(id,items,key,swatch){
   const root=$(id), sl=root.scrollLeft; root.innerHTML='';
   items.forEach(it=>{const v=Array.isArray(it)?it[0]:it, l=Array.isArray(it)?it[1]:it, b=document.createElement('button');
     b.className=(swatch?'dot':'c')+(cfg[key]===v?' on':''); if(swatch){b.style.background=v;b.setAttribute('aria-label',v);} else b.textContent=l;
-    b.onclick=()=>{cfg[key]=v;build();ui();save();}; root.append(b);});
+    b.onclick=()=>{cfg[key]=v;build();ui();}; root.append(b);});
   root.scrollLeft=sl;
 }
 const MODELOS=[['trinco','Trinco'],['combinacao','Combinação'],['envolvente','Envolvente'],['antigo','Antigo'],['executivo','Executivo'],['fivela','Fivela'],['ima','Ímã'],['elastico','Elástico'],['cadeado','Cadeado'],['chave','Chave'],['giratorio','Giratório'],['ziper','Zíper'],['cordao','Cordão']];
@@ -60,7 +63,7 @@ function cards(id,items,key,draw,round){ // cartões com miniatura (textura, met
   const root=$(id), sl=root.scrollLeft; root.innerHTML='';
   items.forEach(([v,l])=>{const b=document.createElement('button'), i=document.createElement('i'), t=document.createElement('span');
     b.className='card'+(cfg[key]===v?' on':''); if(round)i.className='round'; draw(i,v); t.textContent=l; b.append(i,t);
-    b.onclick=()=>{cfg[key]=v;build();ui();save();}; root.append(b);});
+    b.onclick=()=>{cfg[key]=v;build();ui();}; root.append(b);});
   root.scrollLeft=sl;
 }
 function ui(){
@@ -70,7 +73,7 @@ function ui(){
   document.querySelectorAll('.pane').forEach(p=>p.classList.toggle('on',p.dataset.k===tab));
   if(tab==='ce'){ const rce=$('rce'), sl=rce.scrollLeft; rce.innerHTML='';
     CENARIOS.forEach(s=>{ const b=document.createElement('button'); b.className='c'+(s.id===cenario?' on':''); b.textContent=s.nome;
-      b.onclick=()=>{ cenario=s.id; book.setCenario(s.id); api.saveScenario(s.id); ui(); }; rce.append(b); });
+      b.onclick=()=>{ cenario=s.id; book.setCenario(s.id); ui(); }; rce.append(b); });
     rce.scrollLeft=sl; }
   if(tab==='m') chips('rm',MODELOS,'m');
   if(tab==='t'){ const cc=new T.Color(cfg.cor), base=(cc.r*.3+cc.g*.59+cc.b*.11)<.12?'#6b6b6b':cfg.cor;
@@ -82,8 +85,8 @@ function ui(){
   if(tab==='c'){ const rc=$('rc'); rc.innerHTML=''; const wb=document.createElement('button'); wb.className='dot wheelb'; wb.setAttribute('aria-label','Roda de cores'); wb.onclick=openWheel;
     const sw=document.createElement('span'); sw.className='sw'; sw.style.background=cfg.cor; sw.onclick=openWheel; const lb=document.createElement('small'); lb.textContent=cfg.cor+' · toque para mudar'; rc.append(wb,sw,lb); }
 }
-$('gl').oninput=e=>{cfg.gl=e.target.value/100; paint(); save();};
-$('tx').oninput=e=>{cfg.txt=e.target.value; drawFoil(); save();};
+$('gl').oninput=e=>{cfg.gl=e.target.value/100; paint();};
+$('tx').oninput=e=>{cfg.txt=e.target.value; drawFoil();};
 
 /* ---------- roda de cores ---------- */
 const wc=$('wc'), wx=wc.getContext('2d'), WS=wc.width, WR=WS/2, hsv={h:0,s:0,v:.6};
@@ -113,15 +116,24 @@ wc.addEventListener('pointermove',e=>{if(wdrag)pick(e);});
 wc.addEventListener('pointerup',()=>wdrag=false);
 $('wv').oninput=e=>{hsv.v=e.target.value/100; applyWheel();};
 function openWheel(){Object.assign(hsv,hex2hsv(cfg.cor)); $('wv').value=Math.round(hsv.v*100); $('wh').classList.add('on'); applyWheel();}
-function closeWheel(){$('wh').classList.remove('on'); ui(); save();}
+function closeWheel(){$('wh').classList.remove('on'); ui();}
 $('wok').onclick=closeWheel; $('wh').onclick=e=>{if(e.target.id==='wh')closeWheel();};
 
   $('tx').value = cfg.txt || '';
   $('gl').value = Math.round((cfg.gl || 0) * 100);
   $('sp').onclick = () => book.spin();
   $('tg').onclick = () => book.setOpen(!book.isOpen());
-  $('bk').onclick = () => { location.hash = '#/'; };
-  $('sv').onclick = () => { flush(); $('sv').textContent = 'Salvo ✓'; setTimeout(() => { location.hash = '#/'; }, 700); };
+  const folha = $('cf');
+  const sai = () => { location.hash = '#/'; };
+  $('bk').onclick = () => { if (mudou()) folha.classList.add('on'); else sai(); };
+  $('cfn').onclick = () => folha.classList.remove('on');
+  folha.onclick = (e) => { if (e.target === folha) folha.classList.remove('on'); };
+  $('cfs').onclick = sai; // descartar: nada foi gravado
+  $('sv').onclick = async () => {
+    await api.saveCover({ ...cfg }); await api.saveScenario(cenario);
+    salvo = estado(); salvou = true;
+    $('sv').textContent = 'Salvo ✓'; setTimeout(sai, 700);
+  };
   ui();
-  return () => { if (st) flush(); try { api.saveCoverThumb(book.snapshot()); } catch (e) { console.error(e); } book.destroy(); };
+  return () => { if (salvou) { try { api.saveCoverThumb(book.snapshot()); } catch (e) { console.error(e); } } book.destroy(); };
 }
