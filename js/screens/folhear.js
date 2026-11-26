@@ -2,6 +2,7 @@
 // Dia sem registro = página em branco. Só o dono vê isto.
 import * as api from '../api.js';
 import { today, addDays, monthKey, formatLong } from '../clock.js';
+import { dadosCarimbo, criaCarimbo } from '../carimbo.js';
 
 const h = (tag, props = {}, ...kids) => {
   const e = document.createElement(tag);
@@ -73,6 +74,13 @@ export async function mount(root) {
     return grade;
   }
 
+  // O carimbo ganha um espaço só dele embaixo do calendário, para não cobrir os dias.
+  function calwrap() {
+    const doMes = lista.filter((e) => monthKey(e.data) === st.mes);
+    const d = dadosCarimbo(doMes, cat, st.mes, hoje);
+    return h('div', { class: 'calwrap' + (d ? ' tem-carimbo' : '') }, calendario(), d ? criaCarimbo(d) : null);
+  }
+
   function pagina() {
     const e = reg[st.sel];
     const c = e && cats[e.categoria];
@@ -103,7 +111,7 @@ export async function mount(root) {
         h('button', { class: 'c', 'aria-label': 'Mês anterior', disabled: st.mes <= minMes, onclick: () => mudaMes(-1) }, '‹'),
         h('span', {}, `${MESES[m - 1]} ${y}`),
         h('button', { class: 'c', 'aria-label': 'Próximo mês', disabled: st.mes >= maxMes, onclick: () => mudaMes(1) }, '›')),
-      calendario(),
+      calwrap(),
       pagina());
     body.scrollTop = sc;
   }
