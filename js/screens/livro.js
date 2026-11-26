@@ -16,7 +16,7 @@ export async function mount(root, ctx) {
     <div class="cta" id="cta"></div>`;
   const $ = (id) => root.querySelector('#' + id);
   const hoje = clock.today();
-  const [cover, cat, entry] = await Promise.all([api.getCover(), api.getCatalog(), api.getEntry(hoje)]);
+  const [cover, cat, entry, cenario] = await Promise.all([api.getCover(), api.getCatalog(), api.getEntry(hoje), api.getScenario()]);
 
   const frase = entry && cat.frases.find((f) => f.id === entry.fraseId);
   const opcao = frase && frase.opcoes.find((o) => o.id === entry.opcaoId);
@@ -33,7 +33,7 @@ export async function mount(root, ctx) {
     cta.append(b);
   }
 
-  const book = createBook($('stage'), { cfg: cover || {}, onWant: atualizaCta });
+  const book = createBook($('stage'), { cfg: cover || {}, cenario, onWant: atualizaCta });
   book.setDay(hoje);
   if (DEV) window.__book = book;
 
