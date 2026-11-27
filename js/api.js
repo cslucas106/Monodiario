@@ -80,8 +80,9 @@ const PERFIS_FALSOS = [
 const SEM_ACESSO = new Set(['f6']); // perfil falso que ainda não liberou o livro (testa o "pedir para ver")
 
 export async function listShelf(groupId) { // groupId ainda não é usado na Fase 1
-  const meu = { id: getUser().id, nome: getUser().nome, voce: true, thumb: read('coverThumb2', null), cover: { ...CAPA_PADRAO, ...(read('cover', null) || {}) } };
-  return [meu, ...PERFIS_FALSOS.map((p) => ({ ...p, liberado: !SEM_ACESSO.has(p.id), cover: { ...CAPA_PADRAO, ...p.cover } }))];
+  const ano = Number(today().slice(0, 4));
+  const meu = { id: getUser().id, nome: getUser().nome, voce: true, ano, thumb: read('coverThumb2', null), cover: { ...CAPA_PADRAO, ...(read('cover', null) || {}) } };
+  return [meu, ...PERFIS_FALSOS.map((p) => ({ ...p, ano, liberado: !SEM_ACESSO.has(p.id), cover: { ...CAPA_PADRAO, ...p.cover } }))];
 }
 
 // Ainda por fazer: getDump(tipo, periodo) no api (hoje o cálculo roda direto nas telas) e shareDump(groupId, mes)

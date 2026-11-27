@@ -4,6 +4,7 @@ import { CENARIOS, parede, madeira } from './cenarios.js';
 export { CENARIOS };
 const T = window.THREE;
 
+const SPINE_POR_FILA = 10; // quantas lombadas cabem lado a lado numa prateleira
 const POR_FILA = 3, ALT = 1.25, PASSO = 1.78, LARG = 3.6, TAB = 0.14, PROF = 0.7, CEL = 1.12;
 const rnd = (n) => { const v = Math.sin(n * 127.1 + 311.7) * 43758.5453; return v - Math.floor(v); }; // sorteio fixo (a estante não muda a cada abertura)
 
@@ -78,6 +79,31 @@ function lombada(cor, m) { // lateral do livro com duas faixas de metal
   return new T.CanvasTexture(cv);
 }
 
+function lombadaNome(b, t, h) { // lombada de pé: nome (e ano) escritos de cima para baixo, entre faixas de metal
+  const K = 400, W = Math.round(t * K), H = Math.round(h * K);
+  const cv = document.createElement('canvas'); cv.width = W; cv.height = H;
+  const x = cv.getContext('2d'), c = b.cover || {}, m = METAIS[c.metal] || METAIS.prata;
+  x.fillStyle = c.cor || '#2a2a2a'; x.fillRect(0, 0, W, H);
+  const g = x.createLinearGradient(0, 0, W, 0); // volume arredondado
+  g.addColorStop(0, 'rgba(0,0,0,.45)'); g.addColorStop(0.35, 'rgba(255,255,255,.1)'); g.addColorStop(0.65, 'rgba(255,255,255,.04)'); g.addColorStop(1, 'rgba(0,0,0,.45)');
+  x.fillStyle = g; x.fillRect(0, 0, W, H);
+  const mg = x.createLinearGradient(0, 0, W, 0); mg.addColorStop(0, m[0]); mg.addColorStop(0.55, m[1]); mg.addColorStop(1, m[2]);
+  x.fillStyle = mg; [22, 34, H - 38, H - 26].forEach((y) => x.fillRect(0, y, W, 4));
+  const ano = b.ano ? String(b.ano) : '';
+  const escreve = (txt, yc, maxLen, tam, estilo) => {
+    x.save(); x.translate(W / 2, yc); x.rotate(Math.PI / 2); // lê de cima para baixo
+    x.fillStyle = m[2]; x.textAlign = 'center'; x.textBaseline = 'middle';
+    x.shadowColor = 'rgba(0,0,0,.6)'; x.shadowBlur = 2; x.shadowOffsetY = 1;
+    let f = tam; x.font = `${estilo} ${f}px Georgia,serif`;
+    while (x.measureText(txt).width > maxLen && f > 12) { f -= 2; x.font = `${estilo} ${f}px Georgia,serif`; }
+    x.fillText(txt, 0, 0); x.restore();
+  };
+  const topo = 52, base = H - 52, reservaAno = ano ? 70 : 0;
+  escreve(b.nome || '', topo + (base - reservaAno - topo) / 2, base - reservaAno - topo, Math.round(W * 0.5), 'italic 600');
+  if (ano) escreve(ano, base - 28, 56, Math.round(W * 0.28), '600');
+  return cv;
+}
+
 function loadImg(url) {
   return new Promise((ok, no) => { const i = new Image(); i.onload = () => ok(i); i.onerror = no; i.src = url; });
 }
@@ -100,6 +126,7 @@ function limpa(g) {
 // books: [{ id, nome, voce, thumb, cover }]. onPick(book|null) é chamado ao tocar num livro.
 export async function createShelf(stage, opts = {}) {
   const books = opts.books || [];
+  const N = Math.max(1, books.length), NC = Math.max(1, Math.ceil(books.length / POR_FILA)), NL = Math.ceil(books.length / SPINE_POR_FILA); // NC = prateleiras de capas, NL = de lombadas
   let sc = CENARIOS.find((c) => c.id === opts.scenario) || CENARIOS[0];
   const renderer = new T.WebGLRenderer({ antialias: true, alpha: true });
   renderer.setPixelRatio(Math.min(devicePixelRatio || 1, 2));
@@ -129,7 +156,7 @@ export async function createShelf(stage, opts = {}) {
   function monta() { // parede, estante de madeira, luzes e nomes: tudo o que muda com o cenário
     limpa(env);
     stage.style.background = sc.fundo;
-    const rows = Math.max(1, Math.ceil(books.length / POR_FILA));
+    const rows = NC + NL;
     const coroa = 0.12, plinto = 0.22, cT = ALT + 0.3; // cT = altura do teto da primeira prateleira
     topY = cT + TAB + coroa; botY = -(rows - 1) * PASSO - TAB - plinto;
     const H = topY - botY, cy = (topY + botY) / 2;
@@ -191,6 +218,29 @@ export async function createShelf(stage, opts = {}) {
       mesh.position.set(x, y, zBase); mesh.rotation.y = (rnd(i * 5 + 2) - 0.5) * 0.08; mesh.userData.i = i;
       livros.add(mesh); items.push({ mesh, mats, zBase, zSel: PROF / 2 - dp / 2 + 0.05 });
     });
+
+    // últimas prateleiras: os mesmos livros de lado, só com a lombada (nome e ano) para fora
+    const gap = 0.035;
+    for (let k = 0; k < NL; k++) {
+      const grupo = books.slice(k * SPINE_POR_FILA, (k + 1) * SPINE_POR_FILA);
+      const esp = grupo.map((_, j) => 0.25 + rnd((k * SPINE_POR_FILA + j) * 17 + 9) * 0.07);
+      let cx = -(esp.reduce((s, v) => s + v + gap, 0) - gap) / 2;
+      grupo.forEach((b, j) => {
+        const i = k * SPINE_POR_FILA + j, t = esp[j];
+        const h = ALT * (0.9 + rnd(i * 19 + 4) * 0.12), dz = 0.5;
+        const cor = (b.cover && b.cover.cor) || '#2a2a2a';
+        const tex = new T.CanvasTexture(lombadaNome(b, t, h)); tex.minFilter = T.LinearFilter;
+        const liso = () => std({ color: new T.Color(cor), roughness: 0.7 });
+        const mats = [liso(), liso(), std({ map: paginas(cor, 'h') }), std({ map: paginas(cor, 'h') }), std({ map: tex, roughness: 0.6 }), liso()];
+        mats.forEach((m) => { m.userData.base = m.map ? new T.Color(1, 1, 1) : new T.Color(cor); });
+        const geo = new T.BoxGeometry(t, h, dz); geo.translate(0, h / 2, 0);
+        const mesh = new T.Mesh(geo, mats); mesh.castShadow = mesh.receiveShadow = true;
+        const zBase = -PROF / 2 + 0.09 + dz / 2 + 0.04;
+        mesh.position.set(cx + t / 2, -(NC + k) * PASSO, zBase); mesh.userData.i = N + i; // N + i: mesmo livro da capa i
+        cx += t + gap;
+        livros.add(mesh); items.push({ mesh, mats, zBase, zSel: zBase + 0.16 });
+      });
+    }
     tinge();
   }
 
@@ -205,7 +255,7 @@ export async function createShelf(stage, opts = {}) {
     let sujo = need;
     if (!drag && Math.abs(vel) > 0.01) { camY += vel * dt; vel *= Math.exp(-dt * 4); limita(); sujo = true; } else if (!drag) vel = 0;
     items.forEach((it, i) => { // o livro tocado avança até a beira da prateleira
-      const alvo = i === sel ? it.zSel : it.zBase, z = it.mesh.position.z;
+      const alvo = i % N === sel ? it.zSel : it.zBase, z = it.mesh.position.z;
       if (Math.abs(alvo - z) > 0.001) { it.mesh.position.z = z + (alvo - z) * (1 - Math.exp(-dt * 12)); sujo = true; }
     });
     if (sujo) { camera.position.y = camY; renderer.render(scene, camera); need = false; }
@@ -224,7 +274,7 @@ export async function createShelf(stage, opts = {}) {
       ndc.set(((e.clientX - r.left) / r.width) * 2 - 1, -((e.clientY - r.top) / r.height) * 2 + 1);
       ray.setFromCamera(ndc, camera);
       const hit = ray.intersectObjects(items.map((it) => it.mesh))[0];
-      const i = hit ? hit.object.userData.i : -1;
+      const i = hit ? hit.object.userData.i % N : -1; // tocar na capa ou na lombada escolhe o mesmo livro
       sel = i === sel ? -1 : i; need = true; vel = 0;
       if (opts.onPick) opts.onPick(sel >= 0 ? books[sel] : null);
     } else if (performance.now() - lastMove > 90) vel = 0;
