@@ -23,5 +23,7 @@ A página inicial agora mostra o livro sobre uma mesa de madeira, com o mesmo ce
 
 **Livro aberto de outra pessoa** (`js/screens/amigo.js`, rota `#/amigo/ID`): duas páginas (jan-jun e jul-dez) só com os carimbos. Na estante, tocar num livro de teste mostra o botão "Abrir o livro de ..." (Fábio não liberou, para testar o "pedir para ver"). `api.getFriendBook` devolve só os 12 carimbos, nunca dias nem palavras.
 
+**Lombadas** (`js/estante3d.js`, função `lombadaNome`): as últimas prateleiras da estante mostram os mesmos livros de lado, com nome e ano escritos de cima para baixo. Tocar na capa ou na lombada escolhe o mesmo livro.
+
 ## Ainda falta (ver `plano-part2.md`)
-Lombada com nome e ano, Fase 2 (Worker + D1).
+Fase 2 (Worker + D1).

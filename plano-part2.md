@@ -55,7 +55,7 @@ Também falta:
 - [x] **Carimbo do dump no mês**: feito no Folhear (`js/carimbo.js`), só em meses fechados com 5+ dias. Falta reaproveitar no livro aberto de outra pessoa.
 - [x] **Livro aberto de outra pessoa**: feito (`js/screens/amigo.js`), duas páginas com 6 meses cada e o carimbo nos meses fechados com 5+ dias. Ainda sem o fluxo real de "pedir para ver" e aprovar (Fase 4).
 - [ ] Atualizar o `plano.md` (regra 8 e seção 3.2): quadrados viram carimbos.
-- [ ] **Lombada** com o nome (e depois o ano), para a estante.
+- [x] **Lombada** com o nome e o ano, em prateleiras só de lombadas no fim da estante (`lombadaNome` em `js/estante3d.js`).
 - [x] Atualizar o `README.md` com o que já funciona.
 - [x] Apagar o CSS que sobrou dos avisos antigos (`.hint`).
 
