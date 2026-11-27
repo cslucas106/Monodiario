@@ -1,5 +1,10 @@
 # Monodiário (Fase 1)
 
+> **STATUS: PROJETO SUSPENSO (Fase 1 concluída).**
+> Não foi abandonado nem rejeitado: o dono vai levar vários projetos para o Telegram quando chegar a hora, e este já está pronto para isso.
+> **Para retomar:** seguir para a Fase 2 (Worker + D1) e a Fase 3 (Mini App do Telegram), conforme `plano.md` e `plano-part2.md`.
+> **Pendências pequenas que ficaram:** (1) atualizar o `plano.md` (regra 8 e seção 3.2: os "quadrados" viram carimbos); (2) conferir o estado real das telas Folhear e Dump.
+
 Plano completo em `plano.md`. Esta pasta é a Fase 1: tudo roda no navegador, com localStorage.
 
 ## Antes de abrir
